@@ -1,193 +1,191 @@
-import * as React from "react"
-import type { HeadFC } from "gatsby"
+import * as React from 'react';
+import '../styles/index.scss';
+import type { HeadFC } from 'gatsby';
 
-const pageStyles = {
-  color: "#232129",
-  padding: 96,
-  fontFamily: "-apple-system, Roboto, sans-serif, serif",
-}
-const headingStyles = {
-  marginTop: 0,
-  marginBottom: 64,
-  maxWidth: 320,
-}
-const headingAccentStyles = {
-  color: "#663399",
-}
-const paragraphStyles = {
-  marginBottom: 48,
-}
-const codeStyles = {
-  color: "#8A6534",
-  padding: 4,
-  backgroundColor: "#FFF4DB",
-  fontSize: "1.25rem",
-  borderRadius: 4,
-}
-const listStyles = {
-  marginBottom: 96,
-  paddingLeft: 0,
-}
-const doclistStyles = {
-  paddingLeft: 0,
-}
-const listItemStyles = {
-  fontWeight: 300,
-  fontSize: 24,
-  maxWidth: 560,
-  marginBottom: 30,
-}
+import * as THREE from 'three';
 
-const linkStyle = {
-  color: "#8954A8",
-  fontWeight: "bold",
-  fontSize: 16,
-  verticalAlign: "5%",
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, Stats } from '@react-three/drei';
+
+import { ImprovedNoise } from 'three/examples/jsm/math/ImprovedNoise';
+
+import { folder, useControls } from 'leva';
+import {
+   EffectComposer,
+   ChromaticAberration,
+} from '@react-three/postprocessing';
+import { BlendFunction } from 'postprocessing';
+
+function Instances({
+   dummy = new THREE.Object3D(),
+   width,
+   height,
+   scale,
+   array,
+   speed,
+   sphere,
+}: {
+   dummy?: THREE.Object3D<Event>;
+   width: number;
+   height: number;
+   scale: number;
+   array: number[][];
+   speed: number;
+   sphere: { w: number; h: number };
+}) {
+   const ref = React.useRef<THREE.InstancedMesh>(null!);
+
+   const length = width * height;
+
+   function mapX(x: number) {
+      return width % 2 === 0 ? x - width / 2 + 0.5 : x - width / 2;
+   }
+
+   function mapY(y: number) {
+      return height % 2 === 0 ? y - height / 2 + 0.5 : y - height / 2;
+   }
+
+   const time = new THREE.Clock();
+
+   useFrame(() => {
+      const perlin = new ImprovedNoise();
+      const vector = new THREE.Vector2();
+      for (let i = 0; i < width; i++) {
+         for (let j = 0; j < height; j++) {
+            vector.set(i, j).divideScalar(100);
+            const d = perlin.noise(
+               vector.x * 6.5,
+               vector.y * 6.5,
+               time.getElapsedTime() * speed * 0.45
+            );
+            array[i][j] = THREE.MathUtils.mapLinear(d, -1, 1, 0, 255);
+         }
+      }
+
+      let n = 0;
+      array.map((row, i) => {
+         return row.map((value: any, j: number) => {
+            // console.log(`NUMBER: ${value}`)
+            const UNIT = THREE.MathUtils.mapLinear(value, 0, 255, 0, 1);
+            const id = n++;
+            dummy.position.set(
+               mapX(i) * scale,
+               mapY(j) * scale,
+               (value / 10) * scale
+            );
+            dummy.scale.set(UNIT, UNIT, UNIT);
+            dummy.updateMatrix();
+            ref.current.setColorAt(
+               id,
+               new THREE.Color(
+                  `rgb(${Math.floor(value)},${Math.floor(value)},${Math.floor(
+                     value
+                  )})`
+               )
+            );
+            ref.current.setMatrixAt(id, dummy.matrix);
+         });
+      });
+
+      // Update the instance
+      ref.current.instanceColor!.needsUpdate = true;
+      ref.current.instanceMatrix.needsUpdate = true;
+   });
+
+   // const [colorArray] = useState(() => Float32Array.from(Array.from({length}, (_, i) => color.set(colors[i]).convertSRGBToLinear().toArray()).flat()))
+
+   React.useLayoutEffect(() => {}, [array]);
+
+   return (
+      // @ts-ignore
+      <instancedMesh ref={ref} args={[null, null, length]}>
+         <sphereBufferGeometry args={[0.4 * scale, sphere.w, sphere.h]}>
+            {/*<instancedBufferAttribute attachObject={['attributes', 'color']} args={[colorArray, 3]}/>*/}
+         </sphereBufferGeometry>
+         <meshBasicMaterial />
+      </instancedMesh>
+   );
 }
-
-const docLinkStyle = {
-  ...linkStyle,
-  listStyleType: "none",
-  display: `inline-block`,
-  marginBottom: 24,
-  marginRight: 12,
-}
-
-const descriptionStyle = {
-  color: "#232129",
-  fontSize: 14,
-  marginTop: 10,
-  marginBottom: 0,
-  lineHeight: 1.25,
-}
-
-const docLinks = [
-  {
-    text: "TypeScript Documentation",
-    url: "https://www.gatsbyjs.com/docs/how-to/custom-configuration/typescript/",
-    color: "#8954A8",
-  },
-  {
-    text: "GraphQL Typegen Documentation",
-    url: "https://www.gatsbyjs.com/docs/how-to/local-development/graphql-typegen/",
-    color: "#8954A8",
-  }
-]
-
-const badgeStyle = {
-  color: "#fff",
-  backgroundColor: "#088413",
-  border: "1px solid #088413",
-  fontSize: 11,
-  fontWeight: "bold",
-  letterSpacing: 1,
-  borderRadius: 4,
-  padding: "4px 6px",
-  display: "inline-block",
-  position: "relative" as "relative",
-  top: -2,
-  marginLeft: 10,
-  lineHeight: 1,
-}
-
-const links = [
-  {
-    text: "Tutorial",
-    url: "https://www.gatsbyjs.com/docs/tutorial/",
-    description:
-      "A great place to get started if you're new to web development. Designed to guide you through setting up your first Gatsby site.",
-    color: "#E95800",
-  },
-  {
-    text: "How to Guides",
-    url: "https://www.gatsbyjs.com/docs/how-to/",
-    description:
-      "Practical step-by-step guides to help you achieve a specific goal. Most useful when you're trying to get something done.",
-    color: "#1099A8",
-  },
-  {
-    text: "Reference Guides",
-    url: "https://www.gatsbyjs.com/docs/reference/",
-    description:
-      "Nitty-gritty technical descriptions of how Gatsby works. Most useful when you need detailed information about Gatsby's APIs.",
-    color: "#BC027F",
-  },
-  {
-    text: "Conceptual Guides",
-    url: "https://www.gatsbyjs.com/docs/conceptual/",
-    description:
-      "Big-picture explanations of higher-level Gatsby concepts. Most useful for building understanding of a particular topic.",
-    color: "#0D96F2",
-  },
-  {
-    text: "Plugin Library",
-    url: "https://www.gatsbyjs.com/plugins",
-    description:
-      "Add functionality and customize your Gatsby site or app with thousands of plugins built by our amazing developer community.",
-    color: "#8EB814",
-  },
-  {
-    text: "Build and Host",
-    url: "https://www.gatsbyjs.com/cloud",
-    badge: true,
-    description:
-      "Now you’re ready to show the world! Give your Gatsby site superpowers: Build and host on Gatsby Cloud. Get started for free!",
-    color: "#663399",
-  },
-]
 
 const IndexPage = () => {
-  return (
-    <main style={pageStyles}>
-      <h1 style={headingStyles}>
-        Congratulations
-        <br />
-        <span style={headingAccentStyles}>— you just made a Gatsby site! 🎉🎉🎉</span>
-      </h1>
-      <p style={paragraphStyles}>
-        Edit <code style={codeStyles}>src/pages/index.tsx</code> to see this page
-        update in real-time. 😎
-      </p>
-      <ul style={doclistStyles}>
-        {docLinks.map(doc => (
-          <li key={doc.url} style={docLinkStyle}>
-            <a
-              style={linkStyle}
-              href={`${doc.url}?utm_source=starter&utm_medium=ts-docs&utm_campaign=minimal-starter-ts`}
-            >
-              {doc.text}
-            </a>
-          </li>
-        ))}
-      </ul>
-      <ul style={listStyles}>
-        {links.map(link => (
-          <li key={link.url} style={{ ...listItemStyles, color: link.color }}>
-            <span>
-              <a
-                style={linkStyle}
-                href={`${link.url}?utm_source=starter&utm_medium=start-page&utm_campaign=minimal-starter-ts`}
-              >
-                {link.text}
-              </a>
-              {link.badge && (
-                <span style={badgeStyle} aria-label="New Badge">
-                  NEW!
-                </span>
-              )}
-              <p style={descriptionStyle}>{link.description}</p>
-            </span>
-          </li>
-        ))}
-      </ul>
-      <img
-        alt="Gatsby G Logo"
-        src="data:image/svg+xml,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 2a10 10 0 110 20 10 10 0 010-20zm0 2c-3.73 0-6.86 2.55-7.75 6L14 19.75c3.45-.89 6-4.02 6-7.75h-5.25v1.5h3.45a6.37 6.37 0 01-3.89 4.44L6.06 9.69C7 7.31 9.3 5.63 12 5.63c2.13 0 4 1.04 5.18 2.65l1.23-1.06A7.959 7.959 0 0012 4zm-8 8a8 8 0 008 8c.04 0 .09 0-8-8z' fill='%23639'/%3E%3C/svg%3E"
-      />
-    </main>
-  )
-}
+   const {
+      ARRAY_WIDTH,
+      ARRAY_HEIGHT,
+      SCALE,
+      speed,
+      ambientLight,
+      pointLight,
+      chromaticAberration,
+      widthSegments,
+      heightSegments,
+   } = useControls({
+      ARRAY_WIDTH: { value: 45, min: 1, max: 150, step: 1 },
+      ARRAY_HEIGHT: { value: 30, min: 1, max: 100, step: 1 },
+      SCALE: { value: 0.1, min: 0.001, max: 0.2 },
+      speed: { value: 1, min: 0.25, max: 4, step: 0.25 },
+      ambientLight: true,
+      pointLight: false,
+      chromaticAberration: true,
+      sphere: folder({
+         widthSegments: { value: 16, min: 1, max: 32, step: 1 },
+         heightSegments: { value: 16, min: 1, max: 32, step: 1 },
+      }),
+   });
 
-export default IndexPage
+   let dummyArray: number[][] = new Array(ARRAY_WIDTH);
 
-export const Head: HeadFC = () => <title>Home Page</title>
+   for (let i = 0; i < ARRAY_WIDTH; i++) {
+      dummyArray[i] = new Array(ARRAY_HEIGHT);
+   }
+
+   return (
+      <Canvas>
+         <Stats />
+         <OrbitControls makeDefault />
+         <EffectComposer>
+            {chromaticAberration ? (
+               <ChromaticAberration
+                  blendFunction={BlendFunction.NORMAL}
+                  offset={[0.008, 0.006]}
+                  radialModulation
+                  modulationOffset={0.6}
+               />
+            ) : (
+               <></>
+            )}
+         </EffectComposer>
+         {ambientLight ? <ambientLight intensity={0.5} /> : null}
+         <Instances
+            width={ARRAY_WIDTH}
+            height={ARRAY_HEIGHT}
+            scale={SCALE}
+            array={dummyArray}
+            speed={speed}
+            sphere={{
+               w: widthSegments,
+               h: heightSegments,
+            }}
+         />
+         {/*<spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />*/}
+         {pointLight ? (
+            <pointLight position={[-10, -10, -10]} intensity={10} />
+         ) : null}
+      </Canvas>
+   );
+};
+
+export default IndexPage;
+
+export const Head: HeadFC = () => <title>Home Page</title>;
+
+/*
+    {
+        dummyArray.map((row, i) => {
+            return row.map((col: any, j: number) => {
+                    // console.log(i, j);
+                    return <Box key={`${i},${j}`} position={[mapX(i) * SCALE, mapY(j) * SCALE, 0]}/>
+                }
+            )
+        })
+    }
+*/

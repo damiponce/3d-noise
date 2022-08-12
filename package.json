@@ -8,7 +8,7 @@
     "gatsby"
   ],
   "scripts": {
-    "develop": "gatsby develop",
+    "develop": "gatsby develop -p 6969",
     "start": "gatsby develop",
     "build": "gatsby build",
     "serve": "gatsby serve",
@@ -16,14 +16,23 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@react-three/drei": "^9.19.7",
+    "@react-three/fiber": "^8.3.1",
+    "@react-three/postprocessing": "^2.6.1",
     "gatsby": "^4.20.0",
+    "gatsby-plugin-sass": "^5.20.0",
+    "leva": "^0.9.30",
+    "postprocessing": "^6.28.5",
     "react": "^18.1.0",
-    "react-dom": "^18.1.0"
+    "react-dom": "^18.1.0",
+    "sass": "^1.54.3",
+    "three": "^0.143.0"
   },
   "devDependencies": {
     "@types/node": "^17.0.45",
     "@types/react": "^18.0.16",
     "@types/react-dom": "^18.0.6",
+    "@types/three": "^0.143.0",
     "typescript": "^4.7.4"
   }
 }
