@@ -10,9 +10,8 @@ const config: GatsbyConfig = {
    // Learn more at: https://gatsby.dev/graphql-typegen
    graphqlTypegen: true,
    plugins: [`gatsby-plugin-sass`],
-   assetPrefix: '',
    // assetPrefix: 'https://damiponce.github.io/3d-noise',
-   pathPrefix: '',
+   pathPrefix: '/3d-noise',
 };
 
 export default config;
