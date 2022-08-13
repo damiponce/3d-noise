@@ -119,8 +119,8 @@ const IndexPage = () => {
       widthSegments,
       heightSegments,
    } = useControls({
-      ARRAY_WIDTH: { value: 45, min: 1, max: 150, step: 1 },
-      ARRAY_HEIGHT: { value: 30, min: 1, max: 100, step: 1 },
+      ARRAY_WIDTH: { value: 45, min: 1, max: 10000, step: 1 },
+      ARRAY_HEIGHT: { value: 30, min: 1, max: 10000, step: 1 },
       SCALE: { value: 0.1, min: 0.001, max: 0.2 },
       speed: { value: 1, min: 0.25, max: 4, step: 0.25 },
       ambientLight: true,
