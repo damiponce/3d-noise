@@ -16,6 +16,11 @@ import {
 } from '@react-three/postprocessing';
 import { BlendFunction } from 'postprocessing';
 
+const time = new THREE.Clock();
+
+const perlin = new ImprovedNoise();
+const vector = new THREE.Vector2();
+
 function Instances({
    dummy = new THREE.Object3D(),
    width,
@@ -35,8 +40,6 @@ function Instances({
 }) {
    const ref = React.useRef<THREE.InstancedMesh>(null!);
 
-   const length = width * height;
-
    function mapX(x: number) {
       return width % 2 === 0 ? x - width / 2 + 0.5 : x - width / 2;
    }
@@ -45,23 +48,22 @@ function Instances({
       return height % 2 === 0 ? y - height / 2 + 0.5 : y - height / 2;
    }
 
-   const time = new THREE.Clock();
+   const length = width * height;
 
-   useFrame(() => {
-      const perlin = new ImprovedNoise();
-      const vector = new THREE.Vector2();
+   let time = 0;
+   useFrame((state, delta, xrFrame) => {
       for (let i = 0; i < width; i++) {
          for (let j = 0; j < height; j++) {
             vector.set(i, j).divideScalar(100);
             const d = perlin.noise(
                vector.x * 6.5,
                vector.y * 6.5,
-               time.getElapsedTime() * speed * 0.45
+               time * speed * 0.45
             );
             array[i][j] = THREE.MathUtils.mapLinear(d, -1, 1, 0, 255);
          }
       }
-
+      time += delta;
       let n = 0;
       array.map((row, i) => {
          return row.map((value: any, j: number) => {
@@ -75,20 +77,20 @@ function Instances({
             );
             dummy.scale.set(UNIT, UNIT, UNIT);
             dummy.updateMatrix();
-            ref.current.setColorAt(
-               id,
-               new THREE.Color(
-                  `rgb(${Math.floor(value)},${Math.floor(value)},${Math.floor(
-                     value
-                  )})`
-               )
-            );
+            // ref.current.setColorAt(
+            //    id,
+            //    new THREE.Color(
+            //       `rgb(${Math.floor(value)},${Math.floor(value)},${Math.floor(
+            //          value
+            //       )})`
+            //    )
+            // );
             ref.current.setMatrixAt(id, dummy.matrix);
          });
       });
 
       // Update the instance
-      ref.current.instanceColor!.needsUpdate = true;
+      // ref.current.instanceColor!.needsUpdate = true;
       ref.current.instanceMatrix.needsUpdate = true;
    });
 
@@ -119,8 +121,8 @@ const IndexPage = () => {
       widthSegments,
       heightSegments,
    } = useControls({
-      ARRAY_WIDTH: { value: 45, min: 1, max: 10000, step: 1 },
-      ARRAY_HEIGHT: { value: 30, min: 1, max: 10000, step: 1 },
+      ARRAY_WIDTH: { value: 45, min: 1, max: 500, step: 1 },
+      ARRAY_HEIGHT: { value: 30, min: 1, max: 500, step: 1 },
       SCALE: { value: 0.1, min: 0.001, max: 0.2 },
       speed: { value: 1, min: 0.25, max: 4, step: 0.25 },
       ambientLight: true,
@@ -142,18 +144,18 @@ const IndexPage = () => {
       <Canvas>
          <Stats />
          <OrbitControls makeDefault />
-         <EffectComposer>
-            {chromaticAberration ? (
-               <ChromaticAberration
-                  blendFunction={BlendFunction.NORMAL}
-                  offset={[0.008, 0.006]}
-                  radialModulation
-                  modulationOffset={0.6}
-               />
-            ) : (
-               <></>
-            )}
-         </EffectComposer>
+         {/*<EffectComposer>*/}
+         {/*   {chromaticAberration ? (*/}
+         {/*      <ChromaticAberration*/}
+         {/*         blendFunction={BlendFunction.NORMAL}*/}
+         {/*         offset={[0.008, 0.006]}*/}
+         {/*         radialModulation*/}
+         {/*         modulationOffset={0.6}*/}
+         {/*      />*/}
+         {/*   ) : (*/}
+         {/*      <></>*/}
+         {/*   )}*/}
+         {/*</EffectComposer>*/}
          {ambientLight ? <ambientLight intensity={0.5} /> : null}
          <Instances
             width={ARRAY_WIDTH}
@@ -167,9 +169,9 @@ const IndexPage = () => {
             }}
          />
          {/*<spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />*/}
-         {pointLight ? (
-            <pointLight position={[-10, -10, -10]} intensity={10} />
-         ) : null}
+         {/*{pointLight ? (*/}
+         {/*   <pointLight position={[-10, -10, -10]} intensity={10} />*/}
+         {/*) : null}*/}
       </Canvas>
    );
 };
